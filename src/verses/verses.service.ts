@@ -19,6 +19,13 @@ export class VersesService {
     return this.verseModel.findOne(query).sort({ createdAt: -1 }).lean();
   }
 
+  findActiveList(period?: string, limit = 20) {
+    const query: Record<string, unknown> = { isActive: true };
+    if (period) query.period = period;
+    const safeLimit = Number.isFinite(limit) ? Math.min(Math.max(limit, 1), 50) : 20;
+    return this.verseModel.find(query).sort({ createdAt: -1 }).limit(safeLimit).lean();
+  }
+
   create(input: CreateVerseDto) {
     return this.verseModel.create(input);
   }

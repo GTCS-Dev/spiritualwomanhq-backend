@@ -13,6 +13,12 @@ export class VersesController {
     return this.versesService.findActive(period);
   }
 
+  @Get('active/list')
+  findActiveList(@Query('period') period?: string, @Query('limit') limit?: string) {
+    const parsedLimit = limit ? Number(limit) : undefined;
+    return this.versesService.findActiveList(period, parsedLimit);
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get('admin/all')
   findAll() {
