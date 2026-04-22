@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { ContactMessagesModule } from './contact-messages/contact-messages.module';
 import { PostsModule } from './posts/posts.module';
 import { UploadsModule } from './uploads/uploads.module';
 
@@ -18,6 +19,7 @@ import { UploadsModule } from './uploads/uploads.module';
       tls: true,
     }),
     AuthModule,
+    ContactMessagesModule,
     PostsModule,
     UploadsModule,
   ],
