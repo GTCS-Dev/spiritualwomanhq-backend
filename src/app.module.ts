@@ -5,7 +5,9 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { ContactMessagesModule } from './contact-messages/contact-messages.module';
 import { PostsModule } from './posts/posts.module';
+import { TestimonialsModule } from './testimonials/testimonials.module';
 import { UploadsModule } from './uploads/uploads.module';
+import { VersesModule } from './verses/verses.module';
 
 @Module({
   imports: [
@@ -21,7 +23,9 @@ import { UploadsModule } from './uploads/uploads.module';
     AuthModule,
     ContactMessagesModule,
     PostsModule,
+    TestimonialsModule,
     UploadsModule,
+    VersesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

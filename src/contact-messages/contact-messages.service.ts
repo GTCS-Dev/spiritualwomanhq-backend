@@ -22,7 +22,7 @@ export class ContactMessagesService {
 
     return {
       id: message._id.toString(),
-      createdAt: message.createdAt,
+        createdAt: (message as any).createdAt as Date,
     };
   }
 
@@ -38,7 +38,7 @@ export class ContactMessagesService {
       phone: doc.phone,
       subject: doc.subject,
       message: doc.message,
-      createdAt: doc.createdAt,
+      createdAt: (doc as any).createdAt as Date,
     }));
   }
 }
