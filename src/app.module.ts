@@ -8,7 +8,11 @@ import { UploadsModule } from './uploads/uploads.module';
 
 @Module({
   imports: [
-    MongooseModule.forRoot(process.env.MONGODB_URI ?? 'mongodb://127.0.0.1:27017/spiritualwoman'),
+    MongooseModule.forRoot(process.env.MONGODB_URI ?? 'mongodb://127.0.0.1:27017/spiritualwoman', {
+      serverSelectionTimeoutMS: 8000,
+      connectTimeoutMS: 8000,
+      socketTimeoutMS: 8000,
+    }),
     AuthModule,
     PostsModule,
     UploadsModule,
