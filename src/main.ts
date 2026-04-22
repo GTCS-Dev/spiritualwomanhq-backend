@@ -10,9 +10,24 @@ async function bootstrap() {
     .map((origin) => origin.trim())
     .filter(Boolean);
 
+  function toRegexPattern(pattern: string) {
+    const escaped = pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp(`^${escaped.replace(/\\\*/g, '.*')}$`);
+  }
+
+  function isOriginAllowed(origin: string) {
+    return allowedOrigins.some((allowedOrigin) => {
+      if (allowedOrigin.includes('*')) {
+        return toRegexPattern(allowedOrigin).test(origin);
+      }
+
+      return allowedOrigin === origin;
+    });
+  }
+
   app.enableCors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin || isOriginAllowed(origin)) {
         callback(null, true);
         return;
       }
