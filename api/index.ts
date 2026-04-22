@@ -35,17 +35,26 @@ async function initializeServer() {
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);
+  const strictCors = process.env.CORS_STRICT === 'true';
 
   app.enableCors({
     origin: (origin, callback) => {
+      if (!strictCors) {
+        callback(null, true);
+        return;
+      }
+
       if (!origin || isOriginAllowed(origin, allowedOrigins)) {
         callback(null, true);
         return;
       }
 
-      callback(new Error(`Origin ${origin} is not allowed by CORS`), false);
+      callback(null, false);
     },
     credentials: true,
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    optionsSuccessStatus: 204,
   });
 
   app.useGlobalPipes(

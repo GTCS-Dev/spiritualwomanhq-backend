@@ -10,6 +10,7 @@ async function bootstrap() {
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);
+  const strictCors = process.env.CORS_STRICT === 'true';
 
   function toRegexPattern(pattern: string) {
     const escaped = pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -28,14 +29,22 @@ async function bootstrap() {
 
   app.enableCors({
     origin: (origin, callback) => {
+      if (!strictCors) {
+        callback(null, true);
+        return;
+      }
+
       if (!origin || isOriginAllowed(origin)) {
         callback(null, true);
         return;
       }
 
-      callback(new Error(`Origin ${origin} is not allowed by CORS`), false);
+      callback(null, false);
     },
     credentials: true,
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    optionsSuccessStatus: 204,
   });
   app.useGlobalPipes(
     new ValidationPipe({
