@@ -3,7 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import express from 'express';
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { IncomingMessage, ServerResponse } from 'http';
 import { AppModule } from '../src/app.module';
 
 const server = express();
@@ -60,7 +60,7 @@ async function initializeServer() {
   isInitialized = true;
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: IncomingMessage, res: ServerResponse) {
   await initializeServer();
-  return server(req, res);
+  return server(req as express.Request, res as express.Response);
 }
