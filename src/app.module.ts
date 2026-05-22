@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
+import { MongooseModule, type MongooseModuleOptions } from '@nestjs/mongoose';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
@@ -11,20 +11,26 @@ import { VersesModule } from './verses/verses.module';
 
 const localMongoUri = 'mongodb://127.0.0.1:27017/spiritualwoman';
 const mongoUri = process.env.MONGODB_URI ?? localMongoUri;
-const useTls =
-  mongoUri.startsWith('mongodb+srv://') || process.env.MONGODB_TLS === 'true';
+
+const mongooseOptions: MongooseModuleOptions = {
+  serverSelectionTimeoutMS: 8000,
+  connectTimeoutMS: 8000,
+  socketTimeoutMS: 8000,
+  maxPoolSize: 5,
+  minPoolSize: 0,
+};
+
+if (process.env.MONGODB_TLS === 'true') {
+  mongooseOptions.tls = true;
+}
+
+if (process.env.MONGODB_TLS === 'false') {
+  mongooseOptions.tls = false;
+}
 
 @Module({
   imports: [
-    MongooseModule.forRoot(mongoUri, {
-      serverSelectionTimeoutMS: 8000,
-      connectTimeoutMS: 8000,
-      socketTimeoutMS: 8000,
-      maxPoolSize: 5,
-      minPoolSize: 0,
-      family: 4,
-      tls: useTls,
-    }),
+    MongooseModule.forRoot(mongoUri, mongooseOptions),
     AuthModule,
     ContactMessagesModule,
     PostsModule,
