@@ -126,6 +126,34 @@ export default async function handler(
 ): Promise<void> {
   setCorsHeaders(req, res);
 
+  if (req.path === '/_diag') {
+    const mongoUri = process.env.MONGODB_URI ?? '';
+    const mongoScheme = mongoUri.startsWith('mongodb+srv://')
+      ? 'mongodb+srv'
+      : mongoUri.startsWith('mongodb://')
+        ? 'mongodb'
+        : 'missing-or-invalid';
+
+    res.status(200).json({
+      ok: true,
+      runtime: {
+        node: process.version,
+        vercel: Boolean(process.env.VERCEL),
+        region: process.env.VERCEL_REGION ?? null,
+      },
+      env: {
+        mongoUriPresent: Boolean(process.env.MONGODB_URI),
+        mongoScheme,
+        jwtSecretPresent: Boolean(process.env.JWT_SECRET),
+        adminUsernamePresent: Boolean(process.env.ADMIN_USERNAME),
+        adminPasswordPresent: Boolean(process.env.ADMIN_PASSWORD),
+        adminPasswordHashPresent: Boolean(process.env.ADMIN_PASSWORD_HASH),
+      },
+      note: 'No secret values are returned from this endpoint.',
+    });
+    return;
+  }
+
   if (req.method === 'OPTIONS') {
     res.status(204).end();
     return;
@@ -137,12 +165,26 @@ export default async function handler(
     return;
   } catch (error) {
     console.error('Serverless initialization failed', error);
+    const err = error as Error & { code?: string; name?: string };
+
+    let hint =
+      'Check MONGODB_URI and required backend environment variables in Vercel.';
+    if (err?.name === 'MongooseServerSelectionError') {
+      hint =
+        'MongoDB Atlas is unreachable from Vercel. Check Atlas Network Access (0.0.0.0/0), DB user credentials, and URI password encoding.';
+    } else if (err?.message?.includes('MONGODB_URI is missing')) {
+      hint =
+        'Set MONGODB_URI in Vercel Project Settings for the Production environment and redeploy.';
+    }
+
     res.statusCode = 500;
     res.setHeader('Content-Type', 'application/json');
     res.end(
       JSON.stringify({
-        message:
-          'Server initialization failed. Check MONGODB_URI and other backend environment variables.',
+        message: 'Server initialization failed.',
+        errorType: err?.name ?? 'Error',
+        errorCode: err?.code,
+        hint,
       }),
     );
   }

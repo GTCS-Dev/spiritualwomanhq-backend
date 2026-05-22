@@ -12,6 +12,12 @@ import { VersesModule } from './verses/verses.module';
 const localMongoUri = 'mongodb://127.0.0.1:27017/spiritualwoman';
 const mongoUri = process.env.MONGODB_URI ?? localMongoUri;
 
+if (process.env.VERCEL && !process.env.MONGODB_URI) {
+  throw new Error(
+    'MONGODB_URI is missing in Vercel production environment variables.',
+  );
+}
+
 const mongooseOptions: MongooseModuleOptions = {
   serverSelectionTimeoutMS: 8000,
   connectTimeoutMS: 8000,
