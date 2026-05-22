@@ -4,6 +4,7 @@ import type { PostBlockType, PostCategory } from '../types/post.type';
 
 export type PostDocument = HydratedDocument<Post>;
 
+
 @Schema({ _id: false })
 export class PostBlockModel {
   @Prop({ required: true })
