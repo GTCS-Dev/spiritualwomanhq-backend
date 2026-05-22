@@ -66,7 +66,13 @@ async function initializeServer() {
   }
 
   initializationPromise = (async () => {
-    const app = await NestFactory.create(AppModule, new ExpressAdapter(server));
+    const app = await NestFactory.create(
+      AppModule,
+      new ExpressAdapter(server),
+      {
+        abortOnError: false,
+      },
+    );
     const allowedOrigins = getAllowedOrigins();
     const strictCors = process.env.CORS_STRICT === 'true';
 
