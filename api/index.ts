@@ -3,11 +3,11 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import express from 'express';
-import type { IncomingMessage, ServerResponse } from 'http';
 import { AppModule } from '../src/app.module';
 
 const server = express();
 let isInitialized = false;
+let initializationPromise: Promise<void> | null = null;
 
 function toRegexPattern(pattern: string) {
   const escaped = pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -29,47 +29,81 @@ async function initializeServer() {
     return;
   }
 
-  const app = await NestFactory.create(AppModule, new ExpressAdapter(server));
-  const defaultOrigins = 'http://localhost:3000,http://localhost:3001,https://*.vercel.app';
-  const allowedOrigins = (process.env.FRONTEND_ORIGIN ?? defaultOrigins)
-    .split(',')
-    .map((origin) => origin.trim())
-    .filter(Boolean);
-  const strictCors = process.env.CORS_STRICT === 'true';
+  if (initializationPromise) {
+    return initializationPromise;
+  }
 
-  app.enableCors({
-    origin: (origin, callback) => {
-      if (!strictCors) {
-        callback(null, true);
-        return;
-      }
+  initializationPromise = (async () => {
+    const app = await NestFactory.create(AppModule, new ExpressAdapter(server));
+    const defaultOrigins =
+      'http://localhost:3000,http://localhost:3001,https://*.vercel.app';
+    const allowedOrigins = (process.env.FRONTEND_ORIGIN ?? defaultOrigins)
+      .split(',')
+      .map((origin) => origin.trim())
+      .filter(Boolean);
+    const strictCors = process.env.CORS_STRICT === 'true';
 
-      if (!origin || isOriginAllowed(origin, allowedOrigins)) {
-        callback(null, true);
-        return;
-      }
+    app.enableCors({
+      origin: (
+        origin: string | undefined,
+        callback: (error: Error | null, allow?: boolean) => void,
+      ) => {
+        if (!strictCors) {
+          callback(null, true);
+          return;
+        }
 
-      callback(null, false);
-    },
-    credentials: true,
-    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    optionsSuccessStatus: 204,
-  });
+        if (!origin || isOriginAllowed(origin, allowedOrigins)) {
+          callback(null, true);
+          return;
+        }
 
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-    }),
-  );
+        callback(null, false);
+      },
+      credentials: true,
+      methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization'],
+      optionsSuccessStatus: 204,
+    });
 
-  await app.init();
-  isInitialized = true;
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+      }),
+    );
+
+    await app.init();
+    isInitialized = true;
+  })();
+
+  try {
+    await initializationPromise;
+  } catch (error) {
+    initializationPromise = null;
+    isInitialized = false;
+    throw error;
+  }
 }
 
-export default async function handler(req: IncomingMessage, res: ServerResponse) {
-  await initializeServer();
-  return server(req as express.Request, res as express.Response);
+export default async function handler(
+  req: express.Request,
+  res: express.Response,
+): Promise<void> {
+  try {
+    await initializeServer();
+    server(req, res);
+    return;
+  } catch (error) {
+    console.error('Serverless initialization failed', error);
+    res.statusCode = 500;
+    res.setHeader('Content-Type', 'application/json');
+    res.end(
+      JSON.stringify({
+        message:
+          'Server initialization failed. Check MONGODB_URI and other backend environment variables.',
+      }),
+    );
+  }
 }

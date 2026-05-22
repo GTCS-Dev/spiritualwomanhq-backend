@@ -9,16 +9,21 @@ import { TestimonialsModule } from './testimonials/testimonials.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { VersesModule } from './verses/verses.module';
 
+const localMongoUri = 'mongodb://127.0.0.1:27017/spiritualwoman';
+const mongoUri = process.env.MONGODB_URI ?? localMongoUri;
+const useTls =
+  mongoUri.startsWith('mongodb+srv://') || process.env.MONGODB_TLS === 'true';
+
 @Module({
   imports: [
-    MongooseModule.forRoot(process.env.MONGODB_URI ?? 'mongodb://127.0.0.1:27017/spiritualwoman', {
+    MongooseModule.forRoot(mongoUri, {
       serverSelectionTimeoutMS: 8000,
       connectTimeoutMS: 8000,
       socketTimeoutMS: 8000,
       maxPoolSize: 5,
       minPoolSize: 0,
       family: 4,
-      tls: true,
+      tls: useTls,
     }),
     AuthModule,
     ContactMessagesModule,
