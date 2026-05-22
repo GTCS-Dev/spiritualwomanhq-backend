@@ -8,6 +8,15 @@ import { AppModule } from '../src/app.module';
 const server = express();
 let isInitialized = false;
 let initializationPromise: Promise<void> | null = null;
+const defaultOrigins =
+  'http://localhost:3000,http://localhost:3001,https://*.vercel.app';
+
+function getAllowedOrigins() {
+  return (process.env.FRONTEND_ORIGIN ?? defaultOrigins)
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+}
 
 function toRegexPattern(pattern: string) {
   const escaped = pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -24,6 +33,29 @@ function isOriginAllowed(origin: string, allowedOrigins: string[]) {
   });
 }
 
+function setCorsHeaders(req: express.Request, res: express.Response) {
+  const strictCors = process.env.CORS_STRICT === 'true';
+  const allowedOrigins = getAllowedOrigins();
+  const requestOrigin = req.headers.origin;
+  const resolvedOrigin =
+    typeof requestOrigin === 'string' ? requestOrigin : undefined;
+
+  if (!resolvedOrigin) {
+    return;
+  }
+
+  if (!strictCors || isOriginAllowed(resolvedOrigin, allowedOrigins)) {
+    res.setHeader('Access-Control-Allow-Origin', resolvedOrigin);
+    res.setHeader('Vary', 'Origin');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader(
+      'Access-Control-Allow-Methods',
+      'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    );
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+  }
+}
+
 async function initializeServer() {
   if (isInitialized) {
     return;
@@ -35,12 +67,7 @@ async function initializeServer() {
 
   initializationPromise = (async () => {
     const app = await NestFactory.create(AppModule, new ExpressAdapter(server));
-    const defaultOrigins =
-      'http://localhost:3000,http://localhost:3001,https://*.vercel.app';
-    const allowedOrigins = (process.env.FRONTEND_ORIGIN ?? defaultOrigins)
-      .split(',')
-      .map((origin) => origin.trim())
-      .filter(Boolean);
+    const allowedOrigins = getAllowedOrigins();
     const strictCors = process.env.CORS_STRICT === 'true';
 
     app.enableCors({
@@ -91,6 +118,13 @@ export default async function handler(
   req: express.Request,
   res: express.Response,
 ): Promise<void> {
+  setCorsHeaders(req, res);
+
+  if (req.method === 'OPTIONS') {
+    res.status(204).end();
+    return;
+  }
+
   try {
     await initializeServer();
     server(req, res);
