@@ -3,6 +3,7 @@ import { MongooseModule, type MongooseModuleOptions } from '@nestjs/mongoose';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { CompetitionsModule } from './competitions/competitions.module';
 import { ContactMessagesModule } from './contact-messages/contact-messages.module';
 import { PostsModule } from './posts/posts.module';
 import { TestimonialsModule } from './testimonials/testimonials.module';
@@ -38,6 +39,7 @@ if (process.env.MONGODB_TLS === 'false') {
   imports: [
     MongooseModule.forRoot(mongoUri, mongooseOptions),
     AuthModule,
+    CompetitionsModule,
     ContactMessagesModule,
     PostsModule,
     TestimonialsModule,

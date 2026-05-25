@@ -5,11 +5,22 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  const defaultOrigins = 'http://localhost:3000,http://localhost:3001,https://*.vercel.app';
-  const allowedOrigins = (process.env.FRONTEND_ORIGIN ?? defaultOrigins)
+  const defaultAllowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'https://*.vercel.app',
+    'https://spiritualwomanhq.vercel.app',
+    'https://spiritualwomanhq.com',
+    'https://www.spiritualwomanhq.com',
+  ];
+
+  const envOrigins = (process.env.FRONTEND_ORIGIN ?? '')
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);
+  const allowedOrigins = [
+    ...new Set([...defaultAllowedOrigins, ...envOrigins]),
+  ];
   const strictCors = process.env.CORS_STRICT === 'true';
 
   function toRegexPattern(pattern: string) {
@@ -28,7 +39,10 @@ async function bootstrap() {
   }
 
   app.enableCors({
-    origin: (origin, callback) => {
+    origin: (
+      origin: string | undefined,
+      callback: (error: Error | null, allow?: boolean) => void,
+    ) => {
       if (!strictCors) {
         callback(null, true);
         return;
@@ -55,4 +69,4 @@ async function bootstrap() {
   );
   await app.listen(process.env.PORT ?? 4000);
 }
-bootstrap();
+void bootstrap();

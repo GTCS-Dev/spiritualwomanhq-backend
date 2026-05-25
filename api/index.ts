@@ -8,14 +8,22 @@ import { AppModule } from '../src/app.module';
 const server = express();
 let isInitialized = false;
 let initializationPromise: Promise<void> | null = null;
-const defaultOrigins =
-  'http://localhost:3000,http://localhost:3001,https://*.vercel.app';
+const defaultAllowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'https://*.vercel.app',
+  'https://spiritualwomanhq.vercel.app',
+  'https://spiritualwomanhq.com',
+  'https://www.spiritualwomanhq.com',
+];
 
 function getAllowedOrigins() {
-  return (process.env.FRONTEND_ORIGIN ?? defaultOrigins)
+  const envOrigins = (process.env.FRONTEND_ORIGIN ?? '')
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);
+
+  return [...new Set([...defaultAllowedOrigins, ...envOrigins])];
 }
 
 function toRegexPattern(pattern: string) {
