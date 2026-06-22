@@ -76,9 +76,11 @@ ${message}
     this.logger.log(`Sending contact notification email for: ${name} <${email}>`);
 
     try {
+      // Support multiple comma-separated recipients
+      const recipients = this.toEmail.split(',').map((e) => e.trim()).filter(Boolean);
       const { data, error } = await this.resend.emails.send({
         from: this.fromEmail,
-        to: [this.toEmail],
+        to: recipients,
         replyTo: email,
         subject: `[Spiritual Woman Contact] ${subject}`,
         text: plainTextBody,
