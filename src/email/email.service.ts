@@ -76,30 +76,41 @@ ${message}
     this.logger.log(`Sending contact notification email for: ${name} <${email}>`);
 
     try {
-      // Support multiple comma-separated recipients
+      // Support multiple comma-separated recipients (send separately so one failure doesn't block others)
       const recipients = this.toEmail.split(',').map((e) => e.trim()).filter(Boolean);
-      const { data, error } = await this.resend.emails.send({
-        from: this.fromEmail,
-        to: recipients,
-        replyTo: email,
-        subject: `[Spiritual Woman Contact] ${subject}`,
-        text: plainTextBody,
-        html: htmlBody,
-      });
+      const results = await Promise.allSettled(
+        recipients.map(async (recipient) => {
+          const { data, error } = await this.resend.emails.send({
+            from: this.fromEmail,
+            to: [recipient],
+            replyTo: email,
+            subject: `[Spiritual Woman Contact] ${subject}`,
+            text: plainTextBody,
+            html: htmlBody,
+          });
+          if (error) {
+            this.logger.error(`Resend API error for ${recipient}: ${error.message}`);
+            throw new Error(error.message);
+          }
+          this.logger.log(`Contact email sent to ${recipient}. Message ID: ${data?.id}`);
+          return { recipient, messageId: data?.id };
+        }),
+      );
 
-      if (error) {
-        this.logger.error(`Resend API error: ${error.message}`, error);
-        return {
-          success: false,
-          error: error.message,
-        };
+      const succeeded = results.filter((r) => r.status === 'fulfilled');
+      const failed = results.filter((r) => r.status === 'rejected');
+
+      if (failed.length > 0) {
+        this.logger.error(`${failed.length}/${recipients.length} emails failed to send`);
+        // If at least one succeeded, consider it a partial success
+        if (succeeded.length > 0) {
+          return { success: true, messageId: succeeded[0].value?.messageId };
+        }
+        return { success: false, error: `All ${recipients.length} send attempts failed` };
       }
 
-      this.logger.log(`Contact notification email sent successfully. Message ID: ${data?.id}`);
-      return {
-        success: true,
-        messageId: data?.id,
-      };
+      this.logger.log(`Contact notification emails sent successfully to ${recipients.join(', ')}`);
+      return { success: true, messageId: succeeded[0]?.value?.messageId };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error sending email';
       this.logger.error(`Failed to send email: ${errorMessage}`, err);
