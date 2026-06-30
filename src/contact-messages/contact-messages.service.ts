@@ -68,28 +68,24 @@ export class ContactMessagesService {
 
     this.logger.log(`Contact message saved to DB. ID: ${message._id}`);
 
-    // Send email notification via Resend (fire-and-forget with error logging)
+    // Send email notification via Resend (awaited so errors propagate to the client)
     if (this.emailService.isConfigured) {
-      this.emailService
-        .sendContactNotification({
-          name: input.name,
-          email: input.email,
-          phone: input.phone,
-          subject: input.subject,
-          message: input.message,
-        })
-        .then((result) => {
-          if (!result.success) {
-            this.logger.error(
-              `Failed to send email notification for message ${message._id}: ${result.error}`,
-            );
-          }
-        })
-        .catch((err) => {
-          this.logger.error(
-            `Unexpected error sending email for message ${message._id}: ${err instanceof Error ? err.message : 'Unknown error'}`,
-          );
-        });
+      const emailResult = await this.emailService.sendContactNotification({
+        name: input.name,
+        email: input.email,
+        phone: input.phone,
+        subject: input.subject,
+        message: input.message,
+      });
+
+      if (!emailResult.success) {
+        this.logger.error(
+          `Failed to send email notification for message ${message._id}: ${emailResult.error}`,
+        );
+        throw new Error('Your message was saved, but the notification email could not be sent. Please try again later.');
+      }
+
+      this.logger.log(`Email notification sent successfully for message ${message._id}`);
     } else {
       this.logger.warn(
         'Email service not configured. Contact message saved to DB but no email notification was sent.',
