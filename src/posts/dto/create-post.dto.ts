@@ -24,7 +24,7 @@ export class CreatePostDto {
   @MaxLength(220)
   excerpt: string;
 
-  @IsIn(['devotional', 'testimony', 'events', 'leadership', 'family', 'prayer'] satisfies PostCategory[])
+  @IsIn(['devotional', 'testimony', 'events', 'leadership', 'family', 'prayer', 'article', 'blog', 'post'] satisfies PostCategory[])
   category: PostCategory;
 
   @IsString()

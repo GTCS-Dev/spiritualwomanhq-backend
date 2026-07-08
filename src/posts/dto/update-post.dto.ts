@@ -26,7 +26,7 @@ export class UpdatePostDto {
   excerpt?: string;
 
   @IsOptional()
-  @IsIn(['devotional', 'testimony', 'events', 'leadership', 'family', 'prayer'] satisfies PostCategory[])
+  @IsIn(['devotional', 'testimony', 'events', 'leadership', 'family', 'prayer', 'article', 'blog', 'post'] satisfies PostCategory[])
   category?: PostCategory;
 
   @IsOptional()

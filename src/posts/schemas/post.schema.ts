@@ -42,7 +42,7 @@ export class Post {
   @Prop({ required: true, maxlength: 220 })
   excerpt: string;
 
-  @Prop({ required: true, enum: ['devotional', 'testimony', 'events', 'leadership', 'family', 'prayer'] })
+  @Prop({ required: true, enum: ['devotional', 'testimony', 'events', 'leadership', 'family', 'prayer', 'article', 'blog', 'post'] })
   category: PostCategory;
 
   @Prop({ required: true })

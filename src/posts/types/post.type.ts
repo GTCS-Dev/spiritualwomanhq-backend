@@ -4,7 +4,10 @@ export type PostCategory =
   | 'events'
   | 'leadership'
   | 'family'
-  | 'prayer';
+  | 'prayer'
+  | 'article'
+  | 'blog'
+  | 'post';
 
 export type PostBlockType = 'heading2' | 'heading3' | 'paragraph' | 'image';
 
