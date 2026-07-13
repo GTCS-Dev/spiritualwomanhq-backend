@@ -1,6 +1,5 @@
 import { Type } from 'class-transformer';
 import {
-  ArrayMinSize,
   IsArray,
   IsBoolean,
   IsIn,
@@ -35,11 +34,11 @@ export class CreatePostDto {
   @MinLength(10)
   content: string;
 
+  @IsOptional()
   @IsArray()
-  @ArrayMinSize(1)
   @ValidateNested({ each: true })
   @Type(() => PostBlockDto)
-  blocks: PostBlockDto[];
+  blocks?: PostBlockDto[];
 
   @IsOptional()
   @IsBoolean()
