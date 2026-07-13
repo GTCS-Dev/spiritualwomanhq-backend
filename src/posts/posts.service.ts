@@ -63,7 +63,7 @@ export class PostsService implements OnModuleInit {
       category: input.category,
       coverImage: input.coverImage,
       content: input.content,
-      blocks: input.blocks,
+      blocks: input.blocks ?? [],
       isPublished: input.isPublished ?? true,
       author: input.author,
     });
